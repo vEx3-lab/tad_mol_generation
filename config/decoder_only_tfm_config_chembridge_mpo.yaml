@@ -1,0 +1,48 @@
+###########################################
+# date:2025_11_10
+# 用于decoder_only_tfm的config参数配置文件
+############################################
+
+# 模型名称
+model_name: "decoder_only_tfm"
+device: "cuda"
+
+# 模型结构
+model:
+  d_model: 512
+  n_heads: 6
+  n_layers: 3
+  max_len: 80
+  dropout: 0.2
+
+# 训练参数
+train:
+  batch_size: 512
+  epochs: 100
+  lr: 1e-3
+  k_folds: 3
+  clip_grad: 1.0
+  random_state : 2025
+
+# 微调参数
+fine_tune:
+  batch_size: 64
+  epochs: 30
+  lr: 1e-4
+  clip_grad: 1.0     # 可微调梯度裁剪
+  start_model: "./model/decoder_only_tfm/best_model_fold2.pt"
+  save_name: "{model_name}_finetuned.pt"
+
+# 生成参数
+generate:
+  num_samples: 1000
+  temperature: 1.0
+  top_k: 10
+  max_len: 80
+
+# 路径配置
+paths:
+  data_file: "./data/ChemBridge_MPO_with_selfies.csv"
+  fine_data_file : "./data/sp_molecules_with_selfies.csv"
+  save_dir: "./model/{model_name}"
+  log_dir: "./logs/{model_name}"

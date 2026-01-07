@@ -1,0 +1,2 @@
+epoch,valid_sequences,mean_reward,top1_reward,top5_mean_reward,policy_loss,kl_loss,adv_mean,kl_beta
+1,8,6.449125,7.836,6.899000000000001,0.8185963034629822,0.9127303957939148,0.1

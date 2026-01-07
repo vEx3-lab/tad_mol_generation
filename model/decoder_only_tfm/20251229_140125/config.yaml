@@ -1,0 +1,32 @@
+device: cuda
+fine_tune:
+  batch_size: 64
+  clip_grad: 1.0
+  epochs: 50
+  lr: 5e-4
+  save_name: '{model_name}_{timestamp}_finetuned.pt'
+  start_model: ./model/decoder_only_tfm/best_model_fold2.pt
+generate:
+  max_len: 80
+  num_samples: 1000
+  temperature: 1.0
+  top_k: 10
+model:
+  d_model: 256
+  dropout: 0.2
+  max_len: 80
+  n_heads: 4
+  n_layers: 3
+model_name: decoder_only_tfm
+paths:
+  data_file: ./data/ChemBridge_MPO_with_selfies.csv
+  fine_data_file: ./data/htvs_molecules_with_selfies.csv
+  log_dir: ./logs/{model_name}
+  save_dir: ./model/{model_name}
+train:
+  batch_size: 512
+  clip_grad: 1.0
+  epochs: 100
+  k_folds: 3
+  lr: 1e-3
+  random_state: 2025

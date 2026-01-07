@@ -1,0 +1,1 @@
+epoch,valid_sequences,mean_reward,top1_reward,top5_mean_reward,policy_loss,kl_loss,kl_beta
