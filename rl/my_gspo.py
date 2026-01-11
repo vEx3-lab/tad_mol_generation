@@ -268,7 +268,7 @@ if __name__ == "__main__":
         strict=False
     )
 
-    optimizer = optim.AdamW(agent.parameters(), lr=5e-6)
+    optimizer = optim.AdamW(agent.parameters(), lr=1e-5)
 
     train_gspo(
         agent,
