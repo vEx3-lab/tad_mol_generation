@@ -6,10 +6,10 @@ import torch.optim as optim
 import pandas as pd
 import numpy as np
 import os
-import selfies as sf
 from datetime import datetime
 from feedback.vina_scores import batch_scores_from_vina
 from utils import make_reward_fn_from_vina,sample_selfies_batch_from_generate_selfies
+import random
 
 # -----------------  GSPO loss（sequence-level PPO） -----------------
 def compute_gspo_loss_batch(
@@ -53,6 +53,7 @@ def compute_gspo_loss_batch(
 
         # ===== GSPO sequence ratio =====
         log_ratio_seq = (token_logp_new - token_logp_old).mean()
+
         ratio_seq = torch.exp(log_ratio_seq)
         ratio_means.append(ratio_seq.detach())
 
@@ -60,10 +61,13 @@ def compute_gspo_loss_batch(
         surr2 = torch.clamp(ratio_seq, 1 - clip_eps, 1 + clip_eps) * adv[i]
         policy_losses.append(-torch.min(surr1, surr2))
 
-        # ===== KL (token-mean) =====
-        log_ratio_ref = token_logp_ref - token_logp_new
-        kl = (torch.exp(log_ratio_ref) - log_ratio_ref - 1).mean()
+        # ===== KL  =====
+        log_ratio_seq = (token_logp_ref - token_logp_new).mean()
+
+        # f-KL on sequence
+        kl = torch.exp(log_ratio_seq) - log_ratio_seq - 1
         kl_losses.append(kl)
+
 
     policy_loss = torch.stack(policy_losses).mean()
     kl_loss = torch.stack(kl_losses).mean()
@@ -139,7 +143,6 @@ def train_gspo(
 
             # ===== Rollout（使用 old_agent 采样）=====
             batch_token_ids, batch_smiles = sample_selfies_batch_from_generate_selfies(
-                model_name="decoder_only_tfm",
                 vocab=vocab,
                 model=old_agent,  # 使用old_agent采样
                 batch_size=batch_size,
@@ -236,12 +239,60 @@ def train_gspo(
         torch.save(best_reward_state, save_path)
         print(f" Saved best reward model: {save_path}")
 
+def set_seed(seed=42):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+# ===== 冻结 agent 大部分参数，只微调最后一层和输出层 =====
+def freeze_agent_partial(agent):
+    # 1. 冻结全部参数
+    for param in agent.parameters():
+        param.requires_grad = False
+
+    # 2. 解冻最后一层 Transformer Block
+    for param in agent.layers[-1].parameters():
+        param.requires_grad = True
+
+    # 3. 解冻输出层 lm_head
+    # for param in agent.lm_head.parameters():
+    #     param.requires_grad = True
+    for param in agent.fc_out.parameters():
+        param.requires_grad = True
+
+    # 4. 收集参数信息
+    trainable_params = []
+    frozen_params = []
+
+    for name, p in agent.named_parameters():
+        if p.requires_grad:
+            trainable_params.append(name)
+        else:
+            frozen_params.append(name)
+
+    # 5. 打印结果
+    print("=" * 60)
+    print(f"Trainable params ({len(trainable_params)}):")
+    for n in trainable_params:
+        print("  ✓", n)
+
+    print("-" * 60)
+    print(f"Frozen params ({len(frozen_params)}):")
+    for n in frozen_params:
+        print("  ❄", n)
+    print("=" * 60)
+
+
+
 
 # ================== main ==================
 if __name__ == "__main__":
     from data.data_utils import selfies_vocab
     from config.load_config import load_config
+    # from model.v6 import decoder_only_lm
     from model.decoder_only_tfm import decoder_only_tfm
+    set_seed(42)
 
     config = load_config("../config/decoder_only_tfm_config.yaml")
     data =   pd.read_csv('../data/htvs_molecules_with_selfies.csv')["selfies"].tolist()
@@ -261,26 +312,37 @@ if __name__ == "__main__":
 
     agent.load_state_dict(
         torch.load(
-            "../model/decoder_only_tfm_best/best_model_fold2.pt",
+            "../train/model/decoder_only_tfm/best_model_fold1.pt",
             map_location=device,
             weights_only=True
         ),
         strict=False
     )
+    # ===== 冻结部分参数 =====
+    freeze_agent_partial(agent)
 
-    optimizer = optim.AdamW(agent.parameters(), lr=1e-5)
+    # optimizer 只会更新 requires_grad=True 的参数
+    # optimizer = optim.AdamW(filter(lambda p: p.requires_grad, agent.parameters()), lr=5e-6)
+    optimizer = torch.optim.AdamW(
+        filter(lambda p: p.requires_grad, agent.parameters()),
+        lr=5e-5,
+        betas=(0.9, 0.999),
+        weight_decay=0.01
+    )
+
+    # optimizer = optim.AdamW(agent.parameters(), lr=5e-5)
 
     train_gspo(
         agent,
         vocab,
         optimizer,
         device=device,
-        iterations=500,  #
-        M=2,  #
-        batch_size=16,
-        mu=4,
-        clip_eps=0.2,
-        kl_beta=0.01,
+        iterations=1,  #
+        M=1000,  #
+        batch_size=12,
+        mu=2,
+        clip_eps=0.3,
+        kl_beta=1e-3,
         temperature=1.0,
         top_k=10,
     )

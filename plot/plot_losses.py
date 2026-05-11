@@ -27,7 +27,7 @@ plt.show()
 # import matplotlib.pyplot as plt
 #
 # # ======= 读取两个模型的 loss 文件 =======
-# df_tfm = pd.read_csv("../model/decoder_only_tfm/loss_fold_1.csv")
+# df_tfm = pd.read_csv("../model/decoder_only_tfm_1_12/loss_fold_1.csv")
 # df_lstm = pd.read_csv("../model/bi_lstm/loss_fold_1.csv")
 #
 # epochs_tfm = range(1, len(df_tfm) + 1)

@@ -77,7 +77,7 @@ def train_grpo():
     model_cfg = config["model"]
 
     # ===== 创建 agent =====
-    if model_name == "decoder_only_tfm":
+    if model_name == "decoder_only_tfm_1_12":
         agent = decoder_only_tfm(vocab_size=len(vocab), **model_cfg).to(device)
     elif model_name == "bi_lstm":
         agent = bi_lstm(vocab_size=len(vocab), **model_cfg).to(device)

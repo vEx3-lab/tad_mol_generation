@@ -129,7 +129,7 @@ from generate_selfies import generate_selfies
 #     基于 SELFIES grammar 的批量生成函数，返回 token_ids / selfies / smiles 列表
 #     """
 #
-#     model = decoder_only_tfm(vocab_size=len(vocab)).to(device)
+#     model = decoder_only_tfm_1_12(vocab_size=len(vocab)).to(device)
 #     if model_path is not None:
 #         state_dict = torch.load(model_path, map_location=device)
 #         # 尽量兼容加载（允许少量不匹配）
@@ -428,7 +428,7 @@ def train_grpo(
     for epoch in range(1, epochs + 1):
         # ---------- 1. rollout ----------
         batch_token_ids, batch_selfies, batch_smiles = sample_selfies_batch_from_generate_selfies(
-            model_name="decoder_only_tfm",
+            model_name="decoder_only_tfm_1_12",
             vocab=vocab,
             model=agent,
             batch_size=batch_size,

@@ -1,12 +1,12 @@
 import os
 import pandas as pd
 import torch
-from data.data_utils import SelfiesDataset,selfies_vocab
+from data.data_utils import SelfiesDataset, save_selfies_vocab, selfies_vocab
 from model.decoder_only_tfm import decoder_only_tfm
 from model.bi_lstm import bi_lstm
 from train_selfies import train_cv
 from config.load_config import load_config
-import pickle
+from project_paths import resolve_project_path
 
 ###########################################
 #                Part 1
@@ -20,14 +20,15 @@ model_name = config["model_name"]
 device = torch.device(config["device"])
 
 # data
-pretrain_data_file = config["paths"]["data_file"]
+pretrain_data_file = resolve_project_path(config["paths"]["data_file"])
 pretrain_selfies = pd.read_csv(pretrain_data_file)["selfies"].tolist()
 
 vocab = selfies_vocab(pretrain_selfies)
 
 # save directory
-save_dir = config["paths"]["save_dir"].format(model_name=model_name)
+save_dir = resolve_project_path(config["paths"]["save_dir"].format(model_name=model_name))
 os.makedirs(save_dir, exist_ok=True)
+save_selfies_vocab(vocab, save_dir / "vocab.json")
 
 print("=== Pretraining Decoder-Only Transformer ===")
 
@@ -55,7 +56,7 @@ train_cv(
     k_folds=int(config["train"]["k_folds"]),
     device=device,
     lr=float(config["train"]["lr"]),
-    random_state=config["train"]["random_state"],
+    random_state=int(config["train"].get("random_state", 42)),
 )
 # import pickle
 #

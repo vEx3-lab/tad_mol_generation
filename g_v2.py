@@ -210,7 +210,7 @@ def train_grpo(
 
         # ---------- 1. rollout (batch generation) ----------
         batch_token_ids, batch_selfies, batch_smiles = sample_selfies_batch_from_generate_selfies(
-            model_name="decoder_only_tfm",
+            model_name="decoder_only_tfm_1_12",
             vocab=vocab,
             model=agent,  # 使用当前 agent
             batch_size=batch_size,

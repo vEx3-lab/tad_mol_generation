@@ -1,22 +1,41 @@
-import tempfile, subprocess, os, hashlib
+import hashlib
+import os
+import subprocess
+import tempfile
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
-def from_smi_2_pdbqt(smiles, output_dir='./temp/pdbqt'):
+
+def canonicalize_smiles(smiles):
+    if smiles is None:
+        return None
     try:
-        mol = Chem.MolFromSmiles(smiles)
+        mol = Chem.MolFromSmiles(str(smiles))
+        if mol is None:
+            return None
+        return Chem.MolToSmiles(mol, canonical=True)
+    except Exception:
+        return None
+
+
+def from_smi_2_pdbqt(smiles, output_dir="./temp/pdbqt", keep_pdbqt=False):
+    try:
+        canonical_smiles = canonicalize_smiles(smiles)
+        if canonical_smiles is None:
+            return "invalid_smiles"
+
+        mol = Chem.MolFromSmiles(canonical_smiles)
         if mol is None:
             return "invalid_smiles"
 
         mol = Chem.AddHs(mol)
 
-        # 3D embedding
         params = AllChem.ETKDG()
         params.randomSeed = 42
         if AllChem.EmbedMolecule(mol, params) != 0:
             return "embed_failed"
 
-        # force field optimization
         try:
             if AllChem.MMFFHasAllMoleculeParams(mol):
                 AllChem.MMFFOptimizeMolecule(mol)
@@ -26,40 +45,51 @@ def from_smi_2_pdbqt(smiles, output_dir='./temp/pdbqt'):
             print(f"[WARN] MMFFOptimize failed: {e}")
             return "mmff_failed"
 
-        # 临时 SDF
-        sdf_name = hashlib.md5(smiles.encode()).hexdigest() + ".sdf"
-        sdf_path = os.path.join(tempfile.gettempdir(), sdf_name)
+        digest = hashlib.md5(canonical_smiles.encode("utf-8")).hexdigest()
+        sdf_path = os.path.join(tempfile.gettempdir(), digest + ".sdf")
         Chem.MolToMolFile(mol, sdf_path)
 
-        # pdbqt 输出
-        pdbqt_name = hashlib.md5(smiles.encode()).hexdigest() + ".pdbqt"
-        output_pdbqt = os.path.join(output_dir, pdbqt_name)
-        os.makedirs(output_dir, exist_ok=True)
+        if keep_pdbqt:
+            os.makedirs(output_dir, exist_ok=True)
+            output_pdbqt = os.path.join(output_dir, digest + ".pdbqt")
+        else:
+            tmp_pdbqt = tempfile.NamedTemporaryFile(
+                suffix=".pdbqt", prefix=digest + "_", delete=False
+            )
+            output_pdbqt = tmp_pdbqt.name
+            tmp_pdbqt.close()
+
+        if keep_pdbqt and os.path.exists(output_pdbqt):
+            return output_pdbqt
 
         cmd = [
-            'obabel',
+            "obabel",
             sdf_path,
-            '-i', 'sdf',
-            '-o', 'pdbqt',
-            '-O', output_pdbqt,
-            '--h',
-            '-xb'
+            "-i",
+            "sdf",
+            "-o",
+            "pdbqt",
+            "-O",
+            output_pdbqt,
+            "--h",
+            "-xb",
         ]
 
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode != 0 or not os.path.exists(output_pdbqt):
             return "obabel_failed"
 
-        return output_pdbqt  # 返回生成的 pdbqt 文件路径
+        return output_pdbqt
 
     except Exception as e:
         print(f"[WARN] from_smi_2_pdbqt failed for {smiles}: {e}")
         return "failed"
 
     finally:
-        if 'sdf_path' in locals() and os.path.exists(sdf_path):
+        if "sdf_path" in locals() and os.path.exists(sdf_path):
             os.remove(sdf_path)
 
-# 测试
-smi = 'CCc1ccc(-c2cc(C(=O)[O-])c3c(-c4ccc(CC)cc4)[nH]nc3n2)cc1'
-print(from_smi_2_pdbqt(smi, './temp/pdbqt'))
+
+if __name__ == "__main__":
+    smi = "CCc1ccc(-c2cc(C(=O)[O-])c3c(-c4ccc(CC)cc4)[nH]nc3n2)cc1"
+    print(from_smi_2_pdbqt(smi, "./temp/pdbqt"))

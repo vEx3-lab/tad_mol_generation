@@ -1,8 +1,8 @@
 import pandas as pd
 import selfies as sf
 import ast
-input_csv = "../model/decoder_only_tfm/pretrained_generated_smiles.csv"   # 你的输入文件
-output_csv = "../model/decoder_only_tfm/generated_smiles.csv"   # 输出文件
+input_csv = "../model/decoder_only_tfm_1_12/pretrained_generated_smiles.csv"   # 你的输入文件
+output_csv = "../model/decoder_only_tfm_1_12/generated_smiles.csv"   # 输出文件
 
 df = pd.read_csv(input_csv)
 

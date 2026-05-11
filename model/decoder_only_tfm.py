@@ -2,8 +2,9 @@
 import torch
 import torch.nn as nn
 class decoder_only_tfm(nn.Module):
-    def __init__(self, vocab_size, d_model=256, n_heads=4, n_layers=2, max_len=80, dropout=0.2):
+    def __init__(self, vocab_size, d_model=256, n_heads=4, n_layers=2, max_len=80, dropout=0.2, pad_token_id=0):
         super().__init__()
+        self.pad_token_id = pad_token_id
         self.token_emb = nn.Embedding(vocab_size, d_model)
         self.pos_emb = nn.Embedding(max_len, d_model)
 
@@ -34,14 +35,15 @@ class decoder_only_tfm(nn.Module):
 
     def forward(self, x):
         B, T = x.shape
+        pad_mask = x.eq(self.pad_token_id)
         pos = torch.arange(T, device=x.device).unsqueeze(0)
         x = self.token_emb(x) + self.pos_emb(pos)
 
         # causal mask: 上三角 -inf，防止未来信息泄露
-        mask = torch.triu(torch.full((T, T), float('-inf'), device=x.device), diagonal=1)
+        mask = torch.triu(torch.ones((T, T), dtype=torch.bool, device=x.device), diagonal=1)
 
         for layer in self.layers:
-            x = layer(x, src_mask=mask)
+            x = layer(x, src_mask=mask, src_key_padding_mask=pad_mask)
 
         x = self.norm(x)
         logits = self.fc_out(x)

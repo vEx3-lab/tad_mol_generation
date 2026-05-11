@@ -27,7 +27,7 @@ def generate_selfies(model_name, vocab, model_path=None,
             "smiles": 解码后的 SMILES 字符串（若能解码成功，否则 None）
     """
     # ===== 创建 / 加载模型 =====
-    if model_name == 'decoder_only_tfm':
+    if model_name == 'decoder_only_tfm_1_12':
         model_cfg = load_config('./config/decoder_only_tfm_config.yaml')["model"]
         model = decoder_only_tfm(
             vocab_size=len(vocab),
@@ -37,17 +37,6 @@ def generate_selfies(model_name, vocab, model_path=None,
             max_len=model_cfg["max_len"],
             dropout=model_cfg["dropout"]
         ).to(device)
-
-    elif model_name == 'bi_lstm':  # ⬅ 新增的分支
-        model_cfg = load_config('./config/bi_lstm_config.yaml')["model"]
-        model = bi_lstm(
-            vocab_size=len(vocab),
-            embed_dims=model_cfg["embed_dims"],
-            hidden_dims=model_cfg["hidden_dims"],
-            n_layers=model_cfg["n_layers"],
-            dropout=model_cfg["dropout"],
-            max_len=model_cfg["max_len"]
-            ).to(device)
     else:
         raise ValueError(f"Unknown model_name: {model_name}")
     # print(model_name,model_path)

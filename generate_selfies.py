@@ -27,17 +27,13 @@ def generate_selfies(model_name, vocab, model=None, model_path=None,
     """
     # ===== 创建 / 加载模型 =====
     if model is None:
-        if model_name == 'decoder_only_tfm':
-            model = decoder_only_tfm(vocab_size=len(vocab)).to(device)
-        elif model_name == 'bi_lstm':  # ⬅ 新增的分支
-            model = bi_lstm(vocab_size=len(vocab)).to(device)
-        else:
-            raise ValueError(f"Unknown model_name: {model_name}")
-
+        model = decoder_only_tfm(vocab_size=len(vocab)).to(device)
         if model_path is not None:
             state_dict = torch.load(model_path, map_location=device)
             # 尽量兼容加载（允许少量不匹配）
             model.load_state_dict(state_dict, strict=False)
+        else:
+            raise ValueError(f"Unknown model parameter,please give a model path")
 
     model = model.to(device)
     model.eval()

@@ -1,2 +1,13 @@
 .idea/
 data/ChemBridge_MPO_with_selfies.csv
+__pycache__/
+*.pyc
+*.pt
+feedback/logs/
+feedback/best_models/
+feedback/temp/
+feedback/vina_results/
+rl/feedback/logs/
+rl/feedback/best_models/
+sample/generated_smiles*.csv
+*.png

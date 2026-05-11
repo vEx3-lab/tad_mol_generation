@@ -4,6 +4,8 @@
 '''
 
 
+import json
+import os
 import pandas as pd
 import selfies as sf
 from tqdm import tqdm
@@ -39,7 +41,7 @@ def simle_2_selfies(input_smile_file_path, output_selfies_file_path):
 
 class SMILESTokenizer:
     """
-    ##############      字符级别分词器smile
+    ##############      原子级别分词器smile
 
     Deals with the tokenization and untokenization of SMILES."""
 
@@ -132,7 +134,7 @@ class selfies_vocab:
         # ====== 2. 从数据中抽取所有 token ======
         token_set = set()
         for seq in selfies_list:
-            tokens = sf.split_selfies(seq)     # 核心函数！
+            tokens = sf.split_selfies(seq)
             token_set.update(tokens)
 
         # ====== 3. 构造 token2id / id2token ======
@@ -164,6 +166,30 @@ class selfies_vocab:
 
     def tokens(self):
         return list(self.token2id.keys())
+
+    def to_dict(self):
+        return {
+            "token2id": self.token2id,
+            "id2token": {str(k): v for k, v in self.id2token.items()},
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        obj = cls.__new__(cls)
+        obj.token2id = {str(k): int(v) for k, v in data["token2id"].items()}
+        obj.id2token = {int(k): str(v) for k, v in data["id2token"].items()}
+        return obj
+
+
+def save_selfies_vocab(vocab, path):
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(vocab.to_dict(), f, ensure_ascii=False, indent=2)
+
+
+def load_selfies_vocab(path):
+    with open(path, "r", encoding="utf-8") as f:
+        return selfies_vocab.from_dict(json.load(f))
 
 
 

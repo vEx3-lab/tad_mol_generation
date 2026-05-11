@@ -13,12 +13,12 @@ model:
   n_heads: 4
   n_layers: 3
   max_len: 80
-  dropout: 0.2
+  dropout: 0.25
 
 # 训练参数
 train:
-  batch_size: 512
-  epochs: 100
+  batch_size: 64
+  epochs: 200
   lr: 1e-3
   k_folds: 3
   clip_grad: 1.0
@@ -42,7 +42,7 @@ generate:
 
 # 路径配置
 paths:
-  data_file: "./data/htvs_molecules_with_selfies.csv"
-  fine_data_file : "./data/sp_molecules_with_selfies.csv"
+  data_file: "../data/htvs_molecules_with_selfies.csv"
+  fine_data_file : "../data/sp_molecules_with_selfies.csv"
   save_dir: "./model/{model_name}"
   log_dir: "./logs/{model_name}"

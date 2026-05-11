@@ -212,7 +212,7 @@ def train_grpo(
 
             # ===== Rollout（使用 old_agent 采样）=====
             batch_token_ids, batch_smiles = sample_selfies_batch_from_generate_selfies(
-                model_name="decoder_only_tfm",
+                model_name="decoder_only_tfm_1_12",
                 vocab=vocab,
                 model=old_agent,  # 使用old_agent采样
                 batch_size=batch_size,

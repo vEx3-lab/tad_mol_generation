@@ -30,7 +30,7 @@ fine_tune:
   epochs: 30
   lr: 1e-4
   clip_grad: 1.0     # 可微调梯度裁剪
-  start_model: "./model/decoder_only_tfm/best_model_fold2.pt"
+  start_model: "./model/decoder_only_tfm_1_12/best_model_fold2.pt"
   save_name: "{model_name}_finetuned.pt"
 
 # 生成参数

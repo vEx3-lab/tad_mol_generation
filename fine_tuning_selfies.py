@@ -9,7 +9,7 @@
 # from datetime import datetime
 # from data.data_utils import selfies_vocab,SelfiesDataset
 # from dataloader import SMILESDataset,SMILESTokenizer,create_vocabulary
-# from model.decoder_only_tfm import decoder_only_tfm
+# from model.decoder_only_tfm_1_12 import decoder_only_tfm_1_12
 # from config.load_config import load_config
 #
 # class FineTuner():
@@ -38,7 +38,7 @@
 #         #                                                                )
 #
 #         #  初始化模型
-#         self._model = decoder_only_tfm(
+#         self._model = decoder_only_tfm_1_12(
 #             vocab_size=len(self._vocab),
 #             d_model=self._d_model,
 #             n_heads=self._n_heads,
@@ -129,9 +129,10 @@ from tqdm import tqdm
 from datetime import datetime
 from torch.utils.data import DataLoader
 
-from data.data_utils import selfies_vocab, SelfiesDataset
+from data.data_utils import load_selfies_vocab, save_selfies_vocab, selfies_vocab, SelfiesDataset
 from model.decoder_only_tfm import decoder_only_tfm
 from config.load_config import load_config
+from project_paths import resolve_project_path
 
 
 class FineTuner():
@@ -144,14 +145,22 @@ class FineTuner():
         self._device = torch.device(self._config["device"])
 
         # 数据
-        train_data_path = self._config["paths"]["data_file"]
-        fine_data_path = self._config["paths"]["fine_data_file"]
+        train_data_path = resolve_project_path(self._config["paths"]["data_file"])
+        fine_data_path = resolve_project_path(self._config["paths"]["fine_data_file"])
 
         self._train_data = pd.read_csv(train_data_path)["selfies"].tolist()
         self._fine_data = pd.read_csv(fine_data_path)["selfies"].tolist()
 
         # ⚠️ 强烈建议：实际使用中应直接 load pretrain vocab
-        self._vocab = selfies_vocab(self._train_data)
+        base_save_dir = resolve_project_path(
+            self._config["paths"]["save_dir"].format(model_name=self._model_name)
+        )
+        self._vocab_path = base_save_dir / "vocab.json"
+        if self._vocab_path.exists():
+            self._vocab = load_selfies_vocab(self._vocab_path)
+        else:
+            self._vocab = selfies_vocab(self._train_data)
+            save_selfies_vocab(self._vocab, self._vocab_path)
 
         # 模型参数
         model_cfg = self._config["model"]
@@ -166,10 +175,10 @@ class FineTuner():
         self._epochs = ft_cfg["epochs"]
         self._batch_size = ft_cfg["batch_size"]
         self._lr = float(ft_cfg["lr"])
-        self._start_model = ft_cfg["start_model"]
+        self._start_model = resolve_project_path(ft_cfg["start_model"])
 
         # 实验目录
-        self._save_dir = f"./model/{self._model_name}/{self._timestamp}"
+        self._save_dir = str(base_save_dir / self._timestamp)
         os.makedirs(self._save_dir, exist_ok=True)
 
         # 初始化模型

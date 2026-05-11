@@ -230,7 +230,7 @@ def train_grpo(
 
         # ========= 1. rollout =========
         batch_token_ids, batch_selfies, batch_smiles = sample_selfies_batch_from_generate_selfies(
-            model_name="decoder_only_tfm",
+            model_name="decoder_only_tfm_1_12",
             vocab=vocab,
             model=agent,
             batch_size=batch_size,
@@ -371,7 +371,7 @@ if __name__ == '__main__':
     model_cfg = config['model']
     # ===== SMILES 生成 =====
     # 这里载入最后一个 fold 的最优模型
-    # best_model_path = './model/decoder_only_tfm/20251229_140125/best.pt'
+    # best_model_path = './model/decoder_only_tfm_1_12/20251229_140125/best.pt'
     best_model_path = './model/decoder_only_tfm_best/best_model_fold2.pt'
     model_path = best_model_path
     print(model_path)

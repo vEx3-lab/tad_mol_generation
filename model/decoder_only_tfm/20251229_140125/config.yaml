@@ -5,7 +5,7 @@ fine_tune:
   epochs: 50
   lr: 5e-4
   save_name: '{model_name}_{timestamp}_finetuned.pt'
-  start_model: ./model/decoder_only_tfm/best_model_fold2.pt
+  start_model: ./model/decoder_only_tfm_1_12/best_model_fold2.pt
 generate:
   max_len: 80
   num_samples: 1000
@@ -17,7 +17,7 @@ model:
   max_len: 80
   n_heads: 4
   n_layers: 3
-model_name: decoder_only_tfm
+model_name: decoder_only_tfm_1_12
 paths:
   data_file: ./data/ChemBridge_MPO_with_selfies.csv
   fine_data_file: ./data/htvs_molecules_with_selfies.csv

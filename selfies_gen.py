@@ -16,14 +16,14 @@ save_dir = config["paths"]["save_dir"].format(model_name=model_name)
 log_dir = config["paths"]["log_dir"].format(model_name=model_name)
 # ===== 载入数据 =====
 data_file = config["paths"]["data_file"]
-data = pd.read_csv(data_file)["selfies"].tolist()
+data = pd.read_csv('./data/htvs_molecules_with_selfies.csv')["selfies"].tolist()
 
 vocab = selfies_vocab(data)
 model_cfg = config['model']
 # ===== SMILES 生成 =====
 # 这里载入最后一个 fold 的最优模型
-best_model_path = os.path.join(save_dir, f"best_model_fold2.pt")
-best_model_path = './feedback/best_models/best_reward_20251216_173932.pt'
+# best_model_path = os.path.join(save_dir, f"best_model_fold2.pt")
+best_model_path = './rl/feedback/best_models/best_reward_20260323_173854.pt'
 model_path = best_model_path
 print(model_path)
 num_samples = config["generate"]["num_samples"]
@@ -49,7 +49,7 @@ for _ in tqdm(range(num_samples), desc='generating...'):
     generated_smiles.append(result["smiles"])
 
 # 保存两种格式
-gen_path = os.path.join(save_dir, "12_16_grpo_generated_smiles.csv")
+gen_path = os.path.join(save_dir, "3_24_grpo_generated_smiles.csv")
 pd.DataFrame({
     "selfies": generated_selfies,
     "smiles": generated_smiles
